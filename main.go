@@ -1,8 +1,71 @@
 package main
 
 import (
+	"encoding/csv"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
 	"rocinante-books/data/dynamodb"
+	"rocinante-books/entity"
 )
+
+func parseBooks(fn string) (books []*entity.Book, err error) {
+	booksFile, err := os.Open(fn)
+	if err != nil {
+		return nil, nil
+	}
+	defer booksFile.Close()
+	lines, err := csv.NewReader(booksFile).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(lines) < 1 {
+		return nil, errors.New("file doesn't have contents")
+	}
+
+	for _, l := range lines[1:] {
+		if l[6] == "" {
+			continue
+		}
+		books = append(books, &entity.Book{
+			Title:    l[0],
+			Author:   l[2],
+			Category: l[3],
+		})
+	}
+	return books, nil
+}
+
+type HighlightsCsv struct {
+	Title  string
+	Author string
+	Quote  string
+}
+
+func parseHighlights(fn string) (highlights []*HighlightsCsv, err error) {
+	highlightsFile, err := os.Open(fn)
+	if err != nil {
+		return nil, nil
+	}
+	defer highlightsFile.Close()
+	lines, err := csv.NewReader(highlightsFile).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(lines) < 1 {
+		return nil, errors.New("file doesn't have contents")
+	}
+
+	for _, l := range lines[1:] {
+		highlights = append(highlights, &HighlightsCsv{
+			Title:  l[0],
+			Author: l[1],
+			Quote:  l[2],
+		})
+	}
+	return highlights, nil
+}
 
 func main() {
 	// TODO: Pass configuration
@@ -11,6 +74,29 @@ func main() {
 		panic(err)
 	}
 
-	// TODO: Parse books.csv
-	// TODO: Parse highlights.csv and add to books.csv
+	books, err := parseBooks("/Users/rgaquino/Developer/repos/rocinante/rocinante-books/csv/books.csv")
+	if err != nil {
+		fmt.Printf("failed to parse file, err=%v", err)
+		return
+	}
+
+	booksMap := make(map[string]*entity.Book)
+	for _, book := range books {
+		booksMap[book.Title] = book
+	}
+
+	highlights, err := parseHighlights("/Users/rgaquino/Developer/repos/rocinante/rocinante-books/csv/highlights.csv")
+	if err != nil {
+		fmt.Printf("failed to parse file, err=%v", err)
+		return
+	}
+
+	for _, highlight := range highlights {
+		if book, ok := booksMap[highlight.Title]; ok {
+			book.Highlights = append(book.Highlights, highlight.Quote)
+		}
+	}
+
+	x, _ := json.Marshal(books)
+	fmt.Println(string(x))
 }
