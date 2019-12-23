@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -24,11 +23,12 @@ func parseBooks(fn string) (books []*entity.Book, err error) {
 		return nil, errors.New("file doesn't have contents")
 	}
 
-	for _, l := range lines[1:] {
+	for i, l := range lines[1:] {
 		if l[6] == "" {
 			continue
 		}
 		books = append(books, &entity.Book{
+			ID:       int64(i),
 			Title:    l[0],
 			Author:   l[2],
 			Category: l[3],
@@ -69,7 +69,7 @@ func parseHighlights(fn string) (highlights []*HighlightsCsv, err error) {
 
 func main() {
 	// TODO: Pass configuration
-	_, err := dynamodb.New()
+	s, err := dynamodb.New()
 	if err != nil {
 		panic(err)
 	}
@@ -94,9 +94,17 @@ func main() {
 	for _, highlight := range highlights {
 		if book, ok := booksMap[highlight.Title]; ok {
 			book.Highlights = append(book.Highlights, highlight.Quote)
+		} else {
+			fmt.Printf("Couldn't find book: %s\n", highlight.Title)
 		}
 	}
 
-	x, _ := json.Marshal(books)
-	fmt.Println(string(x))
+	for _, book := range booksMap {
+		if err := s.Create(book); err != nil {
+			fmt.Printf("Couldn't save book: %s\n", book.Title)
+		}
+	}
+
+	//x, _ := json.Marshal(books)
+	//fmt.Println(string(x))
 }
