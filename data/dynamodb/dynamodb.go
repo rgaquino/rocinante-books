@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"rocinante-books/data"
-	"rocinante-books/utils/ptr"
 )
 
 type dynamodbStrategy struct {
@@ -17,7 +16,7 @@ type dynamodbStrategy struct {
 func New() (data.Strategy, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: credentials.NewStaticCredentials("", "", ""),
-		Region:      ptr.StrRef("ap-southeast-1"),
+		Region:      aws.String("ap-southeast-1"),
 	})
 	if err != nil {
 		return nil, err
@@ -34,7 +33,7 @@ func (s *dynamodbStrategy) Create(entity data.Entity) error {
 	}
 	_, err = s.db.PutItem(&dynamodb.PutItemInput{
 		Item:      av,
-		TableName: ptr.StrRef("rocinante-books"),
+		TableName: aws.String("rocinante-books"),
 	})
 	if err != nil {
 		return err
