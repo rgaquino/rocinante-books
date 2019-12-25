@@ -4,12 +4,13 @@ import "time"
 
 // Book ...
 type Book struct {
-	ID         int64       `json:"id"`
-	Title      string      `json:"title"`
-	Author     string      `json:"author"`
-	Category   string      `json:"category"`
-	Highlights []string    `json:"highlights"`
-	ReadDates  []time.Time `json:"read_dates"`
+	ID             int64       `json:"id",dynamodbav:"_id"`
+	Title          string      `json:"title",dynamodbav:"title"`
+	Author         string      `json:"author",dynamodbav:"author"`
+	Category       string      `json:"category",dynamodbav:"category"`
+	Highlights     []string    `json:"highlights,omitempty",dynamodbav:"highlights,omitempty"`
+	FinishedAt     []time.Time `json:"finishedAt,omitempty",dynamodbav:"finishedAt,omitempty"`
+	LastFinishedAt time.Time   `json:"lastFinishedAt,omitempty",dynamodbav:"lastFinishedAt,omitempty"`
 }
 
 // TableName ...

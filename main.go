@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"rocinante-books/config"
 	"rocinante-books/data/dynamodb"
 	"rocinante-books/entity"
 )
@@ -67,14 +69,20 @@ func parseHighlights(fn string) (highlights []*HighlightsCsv, err error) {
 	return highlights, nil
 }
 
+func init() {
+	if err := config.LoadJSONConfig(config.Config); err != nil {
+		//logging.Fatal(logTag, "unable to load configuration. error=%v", err)
+	}
+	//logging.Info(logTag, "configuration file loaded")
+}
+
 func main() {
-	// TODO: Pass configuration
-	s, err := dynamodb.New()
+	s, err := dynamodb.New(config.Config.AWS)
 	if err != nil {
 		panic(err)
 	}
 
-	books, err := parseBooks("/Users/rgaquino/Developer/repos/rocinante/rocinante-books/csv/books.csv")
+	books, err := parseBooks(config.Config.Source.Books)
 	if err != nil {
 		fmt.Printf("failed to parse file, err=%v", err)
 		return
@@ -85,7 +93,7 @@ func main() {
 		booksMap[book.Title] = book
 	}
 
-	highlights, err := parseHighlights("/Users/rgaquino/Developer/repos/rocinante/rocinante-books/csv/highlights.csv")
+	highlights, err := parseHighlights(config.Config.Source.Highlights)
 	if err != nil {
 		fmt.Printf("failed to parse file, err=%v", err)
 		return
@@ -95,16 +103,31 @@ func main() {
 		if book, ok := booksMap[highlight.Title]; ok {
 			book.Highlights = append(book.Highlights, highlight.Quote)
 		} else {
-			fmt.Printf("Couldn't find book: %s\n", highlight.Title)
+			fmt.Printf("couldn't find book: %s\n", highlight.Title)
 		}
 	}
 
+	i := 0
 	for _, book := range booksMap {
 		if err := s.Create(book); err != nil {
-			fmt.Printf("Couldn't save book: %s\n", book.Title)
+			fmt.Printf("couldn't save book: %s\n, err=%v", book.Title, err)
+		}
+		i++
+		if i == 1 {
+			break
 		}
 	}
 
-	//x, _ := json.Marshal(books)
-	//fmt.Println(string(x))
+	f, err := os.Create("books.json")
+	if err != nil {
+		fmt.Printf("failed to create new file, err=%v", err)
+		return
+	}
+	booksJson, err := json.Marshal(books)
+	if _, err := f.WriteString(string(booksJson)); err != nil {
+		fmt.Printf("failed to write to new file, err=%v", err)
+		return
+	}
+
+	defer f.Close()
 }

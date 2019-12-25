@@ -1,0 +1,12 @@
+{
+  "aws": {
+    "accessKey": "ACCESS_KEY",
+    "secretKey": "SECRET_KEY",
+    "region": "ap-southeast-1"
+  },
+  "source": {
+    "books": "source/books.csv",
+    "highlights": "source/highlights.csv",
+    "kindle": "source/kindle.txt"
+  }
+}
