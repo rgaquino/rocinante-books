@@ -20,6 +20,7 @@ func LoadJSONConfig(config interface{}) error {
 
 	// try to get filename from env variable
 	filename := os.Getenv("CONFIG_PATH")
+
 	if filename != "" {
 		//logging.Info(logTag, "loading config from envVar=%s, file=%s", "CONFIG_PATH", filename)
 		return LoadJSONFile(filename, config)

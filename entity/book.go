@@ -17,3 +17,7 @@ type Book struct {
 func (b *Book) TableName() string {
 	return "rocinante-books"
 }
+
+type Books []*Book
+
+type BooksMap map[string]*Book

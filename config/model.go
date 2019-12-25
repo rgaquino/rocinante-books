@@ -11,8 +11,3 @@ type AWS struct {
 	SecretKey string `json:"secretKey"`
 	Region    string `json:"region"`
 }
-
-var Config = &struct {
-	AWS    *AWS    `json:"aws"`
-	Source *Source `json:"source"`
-}{}
