@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"rocinante-books/config"
-	"rocinante-books/data/dynamodb"
 	"strconv"
+
+	"github.com/rgaquino/rocinante-books/config"
+	"github.com/rgaquino/rocinante-books/data/dynamodb"
 )
 
 var out string
@@ -18,7 +19,7 @@ var conf = &struct {
 
 func init() {
 	var err error
-	if err = config.LoadJSONConfig(conf); err != nil {
+	if err = config.LoadJSONConfig(conf); err != nil || conf == nil {
 		panic(err)
 	}
 	persist, err = strconv.ParseBool(os.Getenv("PERSIST"))

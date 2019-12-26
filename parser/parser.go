@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"rocinante-books/config"
-	"rocinante-books/entity"
+
+	"github.com/rgaquino/rocinante-books/config"
+	"github.com/rgaquino/rocinante-books/entity"
 )
 
 func parse(c *config.Source) (entity.Books, entity.BooksMap, error) {
