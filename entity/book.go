@@ -4,6 +4,7 @@ import "time"
 
 // Book ...
 type Book struct {
+	ID             int64       `json:"id",dynamodbav:"_id"`
 	ISBN           string      `json:"isbn",dynamodbav:"isbn"`
 	Title          string      `json:"title",dynamodbav:"title"`
 	Subtitle       string      `json:"subtitle,omitempty",dynamodbav:"subtitle,omitempty"`

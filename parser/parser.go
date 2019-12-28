@@ -96,11 +96,12 @@ func (bp *BookParser) parseBooks(fn string) (books entity.Books, err error) {
 		return nil, errors.New("file doesn't have contents")
 	}
 
-	for _, l := range lines[1:] {
+	for i, l := range lines[1:] {
 		if l[8] == "" || !strings.Contains(l[8], "Finished") {
 			continue
 		}
 		b := &entity.Book{
+			ID:       int64(i),
 			Author:   l[2],
 			Category: l[3],
 		}
