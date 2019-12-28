@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/rgaquino/rocinante-books/config"
 	"github.com/rgaquino/rocinante-books/entity"
@@ -54,15 +56,25 @@ func parseBooks(fn string) (books entity.Books, err error) {
 	}
 
 	for i, l := range lines[1:] {
-		if l[6] == "" {
+		if l[8] == "" || !strings.Contains(l[8], "Finished") {
 			continue
 		}
-		books = append(books, &entity.Book{
+		b := &entity.Book{
 			ID:       int64(i),
 			Title:    l[0],
 			Author:   l[2],
 			Category: l[3],
-		})
+		}
+		if l[6] != "" {
+			finishedAt, err := time.Parse("Jan _2, 2006", l[6])
+			if err != nil {
+				fmt.Printf("couldn't parse finishedAt date book=%q\n", l[0])
+			} else {
+				b.LastFinishedAt = &finishedAt
+				b.FinishedAt = []time.Time{finishedAt}
+			}
+		}
+		books = append(books, b)
 	}
 	return books, nil
 }

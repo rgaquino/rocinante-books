@@ -8,9 +8,10 @@ type Book struct {
 	Title          string      `json:"title",dynamodbav:"title"`
 	Author         string      `json:"author",dynamodbav:"author"`
 	Category       string      `json:"category",dynamodbav:"category"`
+	Notes          string      `json:"notes,omitempty",dynamodbav:"notes,omitempty"`
 	Highlights     []string    `json:"highlights,omitempty",dynamodbav:"highlights,omitempty"`
 	FinishedAt     []time.Time `json:"finishedAt,omitempty",dynamodbav:"finishedAt,omitempty"`
-	LastFinishedAt time.Time   `json:"lastFinishedAt,omitempty",dynamodbav:"lastFinishedAt,omitempty"`
+	LastFinishedAt *time.Time  `json:"lastFinishedAt,omitempty",dynamodbav:"lastFinishedAt,omitempty"`
 }
 
 // TableName ...
