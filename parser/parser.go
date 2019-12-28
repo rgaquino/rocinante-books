@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -8,12 +9,52 @@ import (
 	"strings"
 	"time"
 
+	gbooks "google.golang.org/api/books/v1"
+	"google.golang.org/api/option"
+
 	"github.com/rgaquino/rocinante-books/config"
 	"github.com/rgaquino/rocinante-books/entity"
 )
 
-func parse(c *config.Source) (entity.Books, entity.BooksMap, error) {
-	books, err := parseBooks(c.Books)
+type BookParser struct {
+	imageBaseURL string
+	bookService  *gbooks.Service
+}
+
+func NewBookParser(imageBaseURL string, apiKey string) *BookParser {
+	opts := option.WithAPIKey(apiKey)
+
+	bookService, err := gbooks.NewService(context.Background(), opts)
+	if err != nil {
+		panic(err)
+	}
+	return &BookParser{
+		imageBaseURL: imageBaseURL,
+		bookService:  bookService,
+	}
+}
+
+func (bp *BookParser) getDetails(q string, book *entity.Book) error {
+	volumes, err := bp.bookService.Volumes.List(q).Do()
+	if err != nil {
+		return err
+	}
+	if len(volumes.Items) < 1 {
+		return errors.New("no book details found")
+	}
+	details := volumes.Items[0].VolumeInfo
+	book.PageCount = details.PageCount
+	book.Publisher = details.Publisher
+	for _, identifier := range details.IndustryIdentifiers {
+		if identifier.Type == "ISBN_13" {
+			book.ISBN = identifier.Identifier
+		}
+	}
+	return nil
+}
+
+func (bp *BookParser) Parse(c *config.Source) (entity.Books, entity.BooksMap, error) {
+	books, err := bp.parseBooks(c.Books)
 	if err != nil {
 		fmt.Printf("failed to parse file, err=%v", err)
 		return nil, nil, err
@@ -41,7 +82,7 @@ func parse(c *config.Source) (entity.Books, entity.BooksMap, error) {
 	return books, booksMap, nil
 }
 
-func parseBooks(fn string) (books entity.Books, err error) {
+func (bp *BookParser) parseBooks(fn string) (books entity.Books, err error) {
 	booksFile, err := os.Open(fn)
 	if err != nil {
 		return nil, nil
@@ -55,16 +96,24 @@ func parseBooks(fn string) (books entity.Books, err error) {
 		return nil, errors.New("file doesn't have contents")
 	}
 
-	for i, l := range lines[1:] {
+	for _, l := range lines[1:] {
 		if l[8] == "" || !strings.Contains(l[8], "Finished") {
 			continue
 		}
 		b := &entity.Book{
-			ID:       int64(i),
-			Title:    l[0],
 			Author:   l[2],
 			Category: l[3],
 		}
+
+		fullTitle := l[0]
+		fmt.Printf("processing book: %q\n", fullTitle)
+
+		titles := strings.SplitN(fullTitle, ":", 2)
+		b.Title = strings.TrimSpace(titles[0])
+		if len(titles) > 1 {
+			b.Subtitle = strings.TrimSpace(titles[1])
+		}
+
 		if l[6] != "" {
 			finishedAt, err := time.Parse("Jan _2, 2006", l[6])
 			if err != nil {
@@ -74,6 +123,13 @@ func parseBooks(fn string) (books entity.Books, err error) {
 				b.FinishedAt = []time.Time{finishedAt}
 			}
 		}
+
+		// Get details
+		if err := bp.getDetails(fullTitle, b); err != nil {
+			fmt.Printf("failed to find details for book=%q\n, err=%v", fullTitle, err)
+		}
+
+		b.ImageLink = fmt.Sprintf("%s/%s.jpg", bp.imageBaseURL, b.ISBN)
 		books = append(books, b)
 	}
 	return books, nil
@@ -100,11 +156,13 @@ func parseHighlights(fn string) (highlights []*HighlightsCsv, err error) {
 	}
 
 	for _, l := range lines[1:] {
-		highlights = append(highlights, &HighlightsCsv{
-			Title:  l[0],
+		h := &HighlightsCsv{
 			Author: l[1],
 			Quote:  l[2],
-		})
+		}
+		titles := strings.SplitN(l[0], ":", 2)
+		h.Title = strings.TrimSpace(titles[0])
+		highlights = append(highlights, h)
 	}
 	return highlights, nil
 }

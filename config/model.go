@@ -11,3 +11,11 @@ type AWS struct {
 	SecretKey string `json:"secretKey"`
 	Region    string `json:"region"`
 }
+
+type S3 struct {
+	BaseURL string `json:"baseURL"`
+}
+
+type GoogleBooks struct {
+	APIKey string `json:"apiKey"`
+}

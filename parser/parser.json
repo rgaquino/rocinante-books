@@ -8,5 +8,11 @@
     "books": "source/books.csv",
     "highlights": "source/highlights.csv",
     "kindle": "source/kindle.txt"
+  },
+  "s3": {
+    "baseURL": "https://rocinante-books.s3-ap-southeast-1.amazonaws.com/"
+  },
+  "google-books": {
+    "apiKey": "API_KEY"
   }
 }
