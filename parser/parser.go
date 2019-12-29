@@ -5,7 +5,9 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,11 +19,10 @@ import (
 )
 
 type BookParser struct {
-	imageBaseURL string
-	bookService  *gbooks.Service
+	bookService *gbooks.Service
 }
 
-func NewBookParser(imageBaseURL string, apiKey string) *BookParser {
+func NewBookParser(apiKey string) *BookParser {
 	opts := option.WithAPIKey(apiKey)
 
 	bookService, err := gbooks.NewService(context.Background(), opts)
@@ -29,28 +30,8 @@ func NewBookParser(imageBaseURL string, apiKey string) *BookParser {
 		panic(err)
 	}
 	return &BookParser{
-		imageBaseURL: imageBaseURL,
-		bookService:  bookService,
+		bookService: bookService,
 	}
-}
-
-func (bp *BookParser) getDetails(q string, book *entity.Book) error {
-	volumes, err := bp.bookService.Volumes.List(q).Do()
-	if err != nil {
-		return err
-	}
-	if len(volumes.Items) < 1 {
-		return errors.New("no book details found")
-	}
-	details := volumes.Items[0].VolumeInfo
-	book.PageCount = details.PageCount
-	book.Publisher = details.Publisher
-	for _, identifier := range details.IndustryIdentifiers {
-		if identifier.Type == "ISBN_13" {
-			book.ISBN = identifier.Identifier
-		}
-	}
-	return nil
 }
 
 func (bp *BookParser) Parse(c *config.Source) (entity.Books, entity.BooksMap, error) {
@@ -125,12 +106,13 @@ func (bp *BookParser) parseBooks(fn string) (books entity.Books, err error) {
 			}
 		}
 
-		// Get details
-		if err := bp.getDetails(fullTitle, b); err != nil {
-			fmt.Printf("failed to find details for book=%q\n, err=%v", fullTitle, err)
+		slug := strings.ReplaceAll(b.Title, " ", "-") + "-" + strings.ReplaceAll(b.Author, " ", "-")
+		reg, err := regexp.Compile("[^a-zA-Z0-9-]+")
+		if err != nil {
+			log.Fatal(err)
 		}
-
-		b.ImageLink = fmt.Sprintf("%s/%s.jpg", bp.imageBaseURL, b.ISBN)
+		slug = reg.ReplaceAllString(slug, "")
+		b.Slug = strings.ToLower(slug)
 		books = append(books, b)
 	}
 	return books, nil

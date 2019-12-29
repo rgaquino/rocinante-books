@@ -15,7 +15,6 @@ var persist bool
 var conf = &struct {
 	AWS         *config.AWS         `json:"aws"`
 	Source      *config.Source      `json:"source"`
-	S3          *config.S3          `json:"s3"`
 	GoogleBooks *config.GoogleBooks `json:"google-books"`
 }{}
 
@@ -32,7 +31,7 @@ func init() {
 }
 
 func main() {
-	bp := NewBookParser(conf.S3.BaseURL, conf.GoogleBooks.APIKey)
+	bp := NewBookParser(conf.GoogleBooks.APIKey)
 	books, booksMap, err := bp.Parse(conf.Source)
 	if err != nil {
 		panic(err)
