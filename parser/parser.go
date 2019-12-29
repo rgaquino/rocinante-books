@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"regexp"
@@ -57,6 +59,20 @@ func (bp *BookParser) Parse(c *config.Source) (entity.Books, entity.BooksMap, er
 			book.Highlights = append(book.Highlights, highlight.Quote)
 		} else {
 			fmt.Printf("couldn't find book: %s\n", highlight.Title)
+		}
+	}
+
+	kindleHighlights, err := parseKindleHighlights(c.Kindle)
+	if err != nil {
+		fmt.Printf("failed to parse file, err=%v", err)
+		return nil, nil, err
+	}
+
+	for _, highlight := range kindleHighlights {
+		if book, ok := booksMap[highlight.Title]; ok && highlight.Quote != "" {
+			book.Highlights = append(book.Highlights, highlight.Quote)
+		} else if highlight.Quote != "" {
+			fmt.Printf("couldn't find book for kindle: %s\n", highlight.Title)
 		}
 	}
 
@@ -146,6 +162,36 @@ func parseHighlights(fn string) (highlights []*HighlightsCsv, err error) {
 		titles := strings.SplitN(l[0], ":", 2)
 		h.Title = strings.TrimSpace(titles[0])
 		highlights = append(highlights, h)
+	}
+	return highlights, nil
+}
+
+func parseKindleHighlights(fn string) (highlights []*HighlightsCsv, err error) {
+	highlightsFile, err := os.Open(fn)
+	if err != nil {
+		return nil, nil
+	}
+	defer highlightsFile.Close()
+
+	var lines []string
+	reader := bufio.NewReader(highlightsFile)
+	for {
+		line, _, err := reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		lines = append(lines, string(line))
+		if string(line) == "==========" {
+			title := strings.Split(lines[0], "(")
+			highlights = append(highlights, &HighlightsCsv{
+				Title: strings.TrimSpace(title[0]),
+				Quote: strings.TrimSpace(lines[3]),
+			})
+			lines = make([]string, 0)
+		}
 	}
 	return highlights, nil
 }
