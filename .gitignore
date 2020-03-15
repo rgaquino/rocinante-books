@@ -1,2 +1,5 @@
+.vscode/
 .idea/
 *-local.json
+.DS_Store
+.mypy_cache
