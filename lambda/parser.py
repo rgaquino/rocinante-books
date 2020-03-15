@@ -33,8 +33,8 @@ with open('sample_in.csv', 'r') as file:
             book["highlights"].append(row[3])
         count += 1
 
-    title = re.sub(r'\W+ ', '', book["title"])
-    author = re.sub(r'\W+ ', '', book["author"])
+    title = re.sub(r'[^A-Za-z0-9 ]+', '', book["title"])
+    author = re.sub(r'[^A-Za-z0-9 ]+', '', book["author"])
     book["slug"] = '-'.join(
         word for word in f'{title} {author}'.lower().split(' '))
 
