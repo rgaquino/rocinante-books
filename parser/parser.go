@@ -94,7 +94,7 @@ func (bp *BookParser) parseBooks(fn string) (books entity.Books, err error) {
 	}
 
 	for i, l := range lines[1:] {
-		if l[8] == "" || !strings.Contains(l[8], "Finished") {
+		if l[9] == "" || !strings.Contains(l[9], "Finished") {
 			continue
 		}
 		b := &entity.Book{
