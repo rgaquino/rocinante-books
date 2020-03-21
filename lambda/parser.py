@@ -3,6 +3,8 @@ import json
 import re
 from datetime import datetime
 
+INVALID_FINAL_CHARS = [",", ":", ";"]
+
 
 def format_title(title: str) -> (str, str):
     colon = row[0].find(":")
@@ -38,6 +40,8 @@ def format_highlight(highlight: str) -> str:
         highlight = f"[{highlight[0].upper()}]{highlight[1:]}"
     if highlight[-1].isalnum():
         highlight = f"{highlight}."
+    elif highlight[-1] in INVALID_FINAL_CHARS:
+        highlight = f"{highlight[:-1]}."
     return highlight
 
 
@@ -48,6 +52,7 @@ def format_slug(title: str, author: str) -> str:
         word for word in f'{title} {author}'.lower().split(' '))
 
 
+BOOK_ID = "id"
 BOOK_TITLE = "title"
 BOOK_SUBTITLE = "subtitle"
 BOOK_AUTHOR = "author"
@@ -59,6 +64,7 @@ BOOK_CATEGORY = "category"
 
 now: str = datetime.now().isoformat()
 book: dict = {
+    BOOK_ID: 0,
     BOOK_TITLE: "",
     BOOK_AUTHOR: "",
     BOOK_HIGHLIGHTS: [],
