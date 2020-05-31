@@ -3,3 +3,5 @@
 *-local.json
 .DS_Store
 .mypy_cache
+venv/
+goodreads.txt

@@ -7,12 +7,19 @@ from datetime import datetime
 INVALID_FINAL_CHARS = [",", ":", ";"]
 
 
+def format_title_author(title_author: str) -> (str, str, str):
+    author_start = title_author.rfind("(")
+    author_end = title_author.rfind(")")
+    author = format_author(title_author[author_start+1:author_end])
+    title, sub = format_title(title_author[:author_start])
+    return title, sub, author
+
+
 def format_title(title: str) -> (str, str):
     colon = title.find(":")
+    sub = ""
     if colon >= 0:
         sub = title.title()[colon+1:].strip()
-    else:
-        sub = ""
     title = title.title()[:colon].strip()
     return title, sub
 
@@ -114,7 +121,7 @@ def parse_manual(fn):
     count = 0
     for line in file:
         if count == 0:
-            book[BOOK_TITLE],  sub = format_title(line)
+            book[BOOK_TITLE], sub = format_title(line)
             if sub:
                 book[BOOK_SUBTITLE] = sub
         elif count == 1:
@@ -130,6 +137,26 @@ def parse_manual(fn):
     print(json.dumps(book, indent=4))
 
 
+def parse_clip(fn):
+    book = new_book()
+    file = open(fn, 'r')
+    lines = []
+    for line in file:
+        lines.append(line)
+
+    book[BOOK_TITLE], sub, book[BOOK_AUTHOR] = format_title_author(lines[0])
+    if sub:
+        book[BOOK_SUBTITLE] = sub
+
+    count = 4
+    while count < len(lines):
+        highlight = format_highlight(lines[count-1])
+        book[BOOK_HIGHLIGHTS].append(highlight)
+        count += 5
+    book[BOOK_SLUG] = format_slug(book[BOOK_TITLE], book[BOOK_AUTHOR])
+    print(json.dumps(book, indent=4))
+
+
 def main():
     if len(sys.argv) < 3:
         print("Usage: p3 parser.py <source_type> <file_name>")
@@ -137,6 +164,8 @@ def main():
         parse_kindle(sys.argv[2])
     elif sys.argv[1] == 'manual':
         parse_manual(sys.argv[2])
+    elif sys.argv[1] == 'clip':
+        parse_clip(sys.argv[2])
     else:
         print("<source_type> can only be either 'kindle' or 'manual'")
 
