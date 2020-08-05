@@ -20,6 +20,8 @@ def format_title(title: str) -> (str, str):
     sub = ""
     if colon >= 0:
         sub = title.title()[colon+1:].strip()
+    else:
+        colon = len(title)
     title = title.title()[:colon].strip()
     return title, sub
 
