@@ -2,7 +2,10 @@ import csv
 import json
 import re
 import sys
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
+import urllib.request
 
 INVALID_FINAL_CHARS = [",", ":", ";"]
 
@@ -10,7 +13,7 @@ INVALID_FINAL_CHARS = [",", ":", ";"]
 def format_title_author(title_author: str) -> (str, str, str):
     author_start = title_author.rfind("(")
     author_end = title_author.rfind(")")
-    author = format_author(title_author[author_start+1:author_end])
+    author = format_author(title_author[author_start + 1: author_end])
     title, sub = format_title(title_author[:author_start])
     return title, sub, author
 
@@ -19,7 +22,7 @@ def format_title(title: str) -> (str, str):
     colon = title.find(":")
     sub = ""
     if colon >= 0:
-        sub = title.title()[colon+1:].strip()
+        sub = title.title()[colon + 1:].strip()
     else:
         colon = len(title)
     title = title.title()[:colon].strip()
@@ -34,7 +37,7 @@ def format_author(author: str) -> str:
     count = 1
     for a in authors[1:]:
         a = a.strip()
-        if count == len(authors)-1:
+        if count == len(authors) - 1:
             if len(authors) > 2:
                 author += f", and {a}"
             else:
@@ -62,10 +65,9 @@ def format_category(category: str) -> str:
 
 
 def format_slug(title: str, author: str) -> str:
-    title = re.sub(r'[^A-Za-z0-9 ]+', '', title)
-    author = re.sub(r'[^A-Za-z0-9 ]+', '', author)
-    return '-'.join(
-        word for word in f'{title} {author}'.lower().split(' '))
+    title = re.sub(r"[^A-Za-z0-9 ]+", "", title)
+    author = re.sub(r"[^A-Za-z0-9 ]+", "", author)
+    return "-".join(word for word in f"{title} {author}".lower().split(" "))
 
 
 BOOK_ID = "id"
@@ -89,18 +91,18 @@ def new_book() -> dict:
         BOOK_SLUG: "",
         BOOK_FINISHED_AT: [now],
         BOOK_LAST_FINISHED_AT: now,
-        BOOK_CATEGORY: ""
+        BOOK_CATEGORY: "",
     }
 
 
-def parse_kindle(fn):
+def parse_kindle(fn) -> dict:
     book = new_book()
-    with open(fn, 'r') as file:
-        reader = csv.reader(file, delimiter=',')
+    with open(fn, "r") as file:
+        reader = csv.reader(file, delimiter=",")
         count = 0
         for row in reader:
             if count == 1:
-                book[BOOK_TITLE],  sub = format_title(row[0])
+                book[BOOK_TITLE], sub = format_title(row[0])
                 if sub:
                     book[BOOK_SUBTITLE] = sub
             elif count == 2:
@@ -114,12 +116,12 @@ def parse_kindle(fn):
             count += 1
 
         book[BOOK_SLUG] = format_slug(book[BOOK_TITLE], book[BOOK_AUTHOR])
-        print(json.dumps(book, indent=4))
+    return book
 
 
-def parse_manual(fn):
+def parse_manual(fn) -> dict:
     book = new_book()
-    file = open(fn, 'r')
+    file = open(fn, "r")
     count = 0
     for line in file:
         if count == 0:
@@ -136,12 +138,12 @@ def parse_manual(fn):
                 book[BOOK_HIGHLIGHTS].append(highlight)
         count += 1
     book[BOOK_SLUG] = format_slug(book[BOOK_TITLE], book[BOOK_AUTHOR])
-    print(json.dumps(book, indent=4))
+    return book
 
 
-def parse_clip(fn):
+def parse_clip(fn) -> dict:
     book = new_book()
-    file = open(fn, 'r')
+    file = open(fn, "r")
     lines = []
     for line in file:
         lines.append(line)
@@ -152,24 +154,47 @@ def parse_clip(fn):
 
     count = 4
     while count < len(lines):
-        highlight = format_highlight(lines[count-1])
+        highlight = format_highlight(lines[count - 1])
         book[BOOK_HIGHLIGHTS].append(highlight)
         count += 5
     book[BOOK_SLUG] = format_slug(book[BOOK_TITLE], book[BOOK_AUTHOR])
-    print(json.dumps(book, indent=4))
+    return book
+
+
+def get_image_url(title) -> str:
+    title = title.replace(" ", "+")
+    response = requests.get(
+        f"https://www.goodreads.com/search/index.xml?key=NMudcgJgw9gQPDRDb4jeiQ&q={title}&search[field]=title"
+    )
+    if response.status_code == 200:
+        decoded = BeautifulSoup(response.text, features="html.parser")
+        image_url = decoded.goodreadsresponse.search.results.findAll(
+            "work")[0].best_book.image_url.getText()
+        image_url = image_url[0:image_url.rfind(
+            "._")] + image_url[image_url.rfind("_.")+1:]
+        return image_url
+    else:
+        return ''
 
 
 def main():
+    book = {}
+
     if len(sys.argv) < 3:
         print("Usage: p3 parser.py <source_type> <file_name>")
-    elif sys.argv[1] == 'kindle':
-        parse_kindle(sys.argv[2])
-    elif sys.argv[1] == 'manual':
-        parse_manual(sys.argv[2])
-    elif sys.argv[1] == 'clip':
-        parse_clip(sys.argv[2])
+    elif sys.argv[1] == "kindle":
+        book = parse_kindle(sys.argv[2])
+    elif sys.argv[1] == "manual":
+        book = parse_manual(sys.argv[2])
+    elif sys.argv[1] == "clip":
+        book = parse_clip(sys.argv[2])
     else:
         print("<source_type> can only be either 'kindle' or 'manual'")
+
+    if len(book) > 0:
+        # print(json.dumps(book, indent=4))
+        image_url = get_image_url(book[BOOK_TITLE])
+        urllib.request.urlretrieve(image_url, "sample.jpg")
 
 
 if __name__ == "__main__":
