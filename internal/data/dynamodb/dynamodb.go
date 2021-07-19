@@ -6,15 +6,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/rgaquino/rocinante-books/config"
-	"github.com/rgaquino/rocinante-books/data"
+	config2 "github.com/rgaquino/rocinante-books/bulk/raw2json/config"
+	data2 "github.com/rgaquino/rocinante-books/internal/data"
 )
 
 type strategy struct {
 	db *dynamodb.DynamoDB
 }
 
-func New(c *config.AWS) (data.Strategy, error) {
+func New(c *config2.AWS) (data2.Strategy, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Credentials: credentials.NewStaticCredentials(c.AccessKey, c.SecretKey, ""),
 		Region:      aws.String(c.Region),
@@ -27,7 +27,7 @@ func New(c *config.AWS) (data.Strategy, error) {
 	}, nil
 }
 
-func (s *strategy) Create(entity data.Entity) error {
+func (s *strategy) Create(entity data2.Entity) error {
 	av, err := dynamodbattribute.MarshalMap(entity)
 	if err != nil {
 		return err
@@ -42,6 +42,6 @@ func (s *strategy) Create(entity data.Entity) error {
 	return nil
 }
 
-func (s *strategy) CreateAll(entities []data.Entity) error {
+func (s *strategy) CreateAll(entities []data2.Entity) error {
 	panic("not implemented")
 }

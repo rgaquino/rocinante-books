@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	config2 "github.com/rgaquino/rocinante-books/bulk/raw2json/config"
 	gbooks "google.golang.org/api/books/v1"
 	"google.golang.org/api/option"
 
-	"github.com/rgaquino/rocinante-books/config"
 	"github.com/rgaquino/rocinante-books/entity"
 )
 
@@ -36,7 +36,7 @@ func NewBookParser(apiKey string) *BookParser {
 	}
 }
 
-func (bp *BookParser) Parse(c *config.Source) (entity.Books, entity.BooksMap, error) {
+func (bp *BookParser) Parse(c *config2.Source) (entity.Books, entity.BooksMap, error) {
 	books, err := bp.parseBooks(c.Books)
 	if err != nil {
 		fmt.Printf("failed to parse file, err=%v", err)

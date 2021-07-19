@@ -7,9 +7,9 @@ import (
 	"os"
 	"sort"
 
-	"github.com/rgaquino/rocinante-books/data/mysql"
 	"github.com/rgaquino/rocinante-books/entity"
-	"github.com/rgaquino/rocinante-books/ptr"
+	mysql2 "github.com/rgaquino/rocinante-books/internal/data/mysql"
+	ptr2 "github.com/rgaquino/rocinante-books/internal/ptr"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 		panic(err)
 	}
 
-	s, err := mysql.New("DSN")
+	s, err := mysql2.New("DSN")
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func main() {
 
 		b := &entity.Book{
 			Title:         bd.Title,
-			Subtitle:      ptr.StrRefDefaultNil(bd.Subtitle),
+			Subtitle:      ptr2.StrRefDefaultNil(bd.Subtitle),
 			Author:        bd.Author,
 			Category:      bd.Category,
 			Notes:         bd.Notes,

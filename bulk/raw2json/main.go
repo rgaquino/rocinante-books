@@ -6,21 +6,21 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/rgaquino/rocinante-books/config"
-	"github.com/rgaquino/rocinante-books/data/dynamodb"
+	config2 "github.com/rgaquino/rocinante-books/bulk/raw2json/config"
+	dynamodb2 "github.com/rgaquino/rocinante-books/internal/data/dynamodb"
 )
 
 var out string
 var persist bool
 var conf = &struct {
-	AWS         *config.AWS         `json:"aws"`
-	Source      *config.Source      `json:"source"`
-	GoogleBooks *config.GoogleBooks `json:"google-books"`
+	AWS         *config2.AWS         `json:"aws"`
+	Source      *config2.Source      `json:"source"`
+	GoogleBooks *config2.GoogleBooks `json:"google-books"`
 }{}
 
 func init() {
 	var err error
-	if err = config.LoadJSONConfig(conf); err != nil || conf == nil {
+	if err = config2.LoadJSONConfig(conf); err != nil || conf == nil {
 		panic(err)
 	}
 	persist, err = strconv.ParseBool(os.Getenv("PERSIST"))
@@ -50,7 +50,7 @@ func main() {
 		defer f.Close()
 	}
 	if persist {
-		s, err := dynamodb.New(conf.AWS)
+		s, err := dynamodb2.New(conf.AWS)
 		if err != nil {
 			panic(err)
 		}
