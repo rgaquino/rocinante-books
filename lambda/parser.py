@@ -110,6 +110,8 @@ def parse_kindle(fn) -> dict:
             elif count < 8:
                 count += 1
                 continue
+            elif row[0] == "Note":
+                continue
             else:
                 highlight = format_highlight(row[3])
                 book[BOOK_HIGHLIGHTS].append(highlight)
@@ -192,9 +194,10 @@ def main():
         print("<source_type> can only be either 'kindle' or 'manual'")
 
     if len(book) > 0:
-        # print(json.dumps(book, indent=4))
-        image_url = get_image_url(book[BOOK_TITLE])
-        urllib.request.urlretrieve(image_url, "sample.jpg")
+        print(json.dumps(book, indent=4))
+        # image_url = get_image_url(book[BOOK_TITLE])
+        # print(image_url)
+        # urllib.request.urlretrieve(image_url, "sample.jpg")
 
 
 if __name__ == "__main__":

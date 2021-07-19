@@ -10,7 +10,7 @@ import (
 	"github.com/rgaquino/rocinante-books/data"
 )
 
-type dynamodbStrategy struct {
+type strategy struct {
 	db *dynamodb.DynamoDB
 }
 
@@ -22,12 +22,12 @@ func New(c *config.AWS) (data.Strategy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &dynamodbStrategy{
+	return &strategy{
 		db: dynamodb.New(sess),
 	}, nil
 }
 
-func (s *dynamodbStrategy) Create(entity data.Entity) error {
+func (s *strategy) Create(entity data.Entity) error {
 	av, err := dynamodbattribute.MarshalMap(entity)
 	if err != nil {
 		return err
@@ -40,4 +40,8 @@ func (s *dynamodbStrategy) Create(entity data.Entity) error {
 		return err
 	}
 	return nil
+}
+
+func (s *strategy) CreateAll(entities []data.Entity) error {
+	panic("not implemented")
 }

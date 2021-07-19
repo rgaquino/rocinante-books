@@ -97,7 +97,7 @@ func (bp *BookParser) parseBooks(fn string) (books entity.Books, err error) {
 		if l[9] == "" || !strings.Contains(l[9], "Finished") {
 			continue
 		}
-		b := &entity.Book{
+		b := &entity.BookDocument{
 			ID:       int64(i),
 			Author:   l[2],
 			Category: l[3],
@@ -117,7 +117,7 @@ func (bp *BookParser) parseBooks(fn string) (books entity.Books, err error) {
 			if err != nil {
 				fmt.Printf("couldn't parse finishedAt date book=%q\n", l[0])
 			} else {
-				b.LastFinishedAt = &finishedAt
+				b.LastFinishedAt = finishedAt
 				b.FinishedAt = []time.Time{finishedAt}
 			}
 		}

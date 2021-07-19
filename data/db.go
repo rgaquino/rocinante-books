@@ -8,4 +8,5 @@ type Entity interface {
 // Strategy ...
 type Strategy interface {
 	Create(entity Entity) error
+	CreateAll(entities []Entity) error
 }
